@@ -43,6 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () {
             incrementCounter();
           },
+          style: ,
           child: Text('$_count'),
         ),
       ),
