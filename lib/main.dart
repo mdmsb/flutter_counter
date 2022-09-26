@@ -27,23 +27,27 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _count = _getIntFromSharedPref();
+  int _count = 0;
 
-  Future<int> _getIntFromSharedPref() async {
+  @override
+  void initState() {
+    super.initState();
+    _getIntFromSharedPref();
+  }
+
+  Future<void> _getIntFromSharedPref() async {
     final prefs = await SharedPreferences.getInstance();
-    final count = prefs.getInt('_count');
-    if (count == null) {
-      return 0;
-    }
-    return count;
+    setState(() {
+      _count = (prefs.getInt('_count') ?? 0);
+    });
   }
 
   Future<void> incrementCounter() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _count++;
+      _count = (prefs.getInt('_count') ?? 0) + 1;
+      prefs.setInt('_count', _count);
     });
-    await prefs.setInt('_count', _count);
   }
 
   @override
