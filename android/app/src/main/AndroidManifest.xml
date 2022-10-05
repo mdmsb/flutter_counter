@@ -2,9 +2,9 @@
     package="com.example.tasbeeh">
     <uses-permission android:name="android.permission.VIBRATE"/>
    <application
-        android:label="tasbeeh"
+        android:label="Tasbeeh"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

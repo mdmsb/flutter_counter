@@ -1,110 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tasbeeh/theme/theme_constant.dart';
-import 'listmodel.dart';
-import 'settings.dart';
-import 'package:vibration/vibration.dart';
-import 'tasbeeh.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tasbeeh/mytasbeeh.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tasbeeh/listmodel.dart';
+import 'package:vibration/vibration.dart';
 
-late Box tBox;
-void main() async {
-  await Hive.initFlutter();
-  await Hive.openBox('myBox');
-  Hive.registerAdapter(TasbeehModelAdapter());
-  tBox = await Hive.openBox('tasbeehBox');
-  // tBox.add(TasbeehModel(
-  //     title: "Alham",
-  //     text: "Alhamdulillah hi rabbil Alameen",
-  //     target: 5000,
-  //     count: 0));
-  // for (var tkey in tBox.values) {
-  //   debugPrint(tkey.title);
-  // }
-
-  runApp(
-    const MyApp(),
-  );
-}
-
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  static const appTitle = 'Tasbeeh';
+class TasbCount extends StatefulWidget {
+  final int tkey;
+  const TasbCount({super.key, required this.tkey});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<TasbCount> createState() => _TasbCountState();
 }
 
-class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: MyApp.appTitle,
-      theme: darkTheme,
-      home: const MyHomePage(title: MyApp.appTitle),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => MyHomePageState();
-}
-
-class MyHomePageState extends State<MyHomePage> {
-  int _count = 0;
-  late int valueInt;
-
+class _TasbCountState extends State<TasbCount> {
+  final tBox = Hive.box('tasbeehBox');
   static double vibrateduration = 80;
   bool? _isChecked = false;
   int _delayclicks = 0;
+  int _count = 0;
+  late int valueInt;
+
+  String tTitle = "";
+  String tText = "";
+  int tTarget = 0;
 
   @override
   void initState() {
     super.initState();
+    _count = tBox.get(widget.tkey).count;
+    tTitle = tBox.get(widget.tkey).title;
+    tText = tBox.get(widget.tkey).text;
+    tTarget = tBox.get(widget.tkey).target;
     _getIntFromSharedPref();
   }
 
   Future<void> _getIntFromSharedPref() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _count = (prefs.getInt('_count') ?? 0);
-      _isChecked = (prefs.getBool('_isChecked') ?? false);
       vibrateduration = (prefs.getDouble('vibrateduration') ?? 80);
     });
   }
 
-  Future<void> incrementCounter() async {
-    final prefs = await SharedPreferences.getInstance();
+  void incrementCounter() {
     setState(() {
-      _count = (prefs.getInt('_count') ?? 0) + 1;
-      prefs.setInt('_count', _count);
-    });
-    if (_isChecked == true) {
-      Vibration.vibrate(duration: vibrateduration.toInt());
-    }
-  }
-
-  Future<void> editCounter(int val) async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _count = val;
-      prefs.setInt('_count', val);
-    });
-  }
-
-  Future<void> resetCounter() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _count = 0;
-      prefs.setInt('_count', 0);
+      _count++;
+      tBox.put(
+          widget.tkey,
+          TasbeehModel(
+              title: tTitle, text: tText, target: tTarget, count: _count));
+      if (_isChecked == true) {
+        Vibration.vibrate(duration: vibrateduration.toInt());
+      }
+      debugPrint("increement");
     });
   }
 
@@ -112,6 +60,14 @@ class MyHomePageState extends State<MyHomePage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       prefs.setBool('_isChecked', vibrateState);
+    });
+  }
+
+  Future<void> editCounter(int val) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _count = val;
+      prefs.setInt('_count', val);
     });
   }
 
@@ -207,21 +163,20 @@ class MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text("Tasbiyaat Count"),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Row(
               children: [
                 Expanded(
                   child: CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
-                        side: const BorderSide(color: Colors.black)),
+                        side: const BorderSide(
+                            color: Color.fromARGB(255, 109, 71, 71))),
                     title: const Text(
                       "Vibrate",
                     ),
@@ -304,99 +259,73 @@ class MyHomePageState extends State<MyHomePage> {
                     child: const Text('Edit Count')),
               ],
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    debugPrint("vibrate check is $_isChecked");
-                    incrementCounter();
-                  },
-                  onLongPress: () {
-                    debugPrint("Long pressed");
-                    autoClick();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(24),
-                    minimumSize: const Size(200, 40),
-                  ),
-                  child: Text(
-                    '$_count',
-                    style: const TextStyle(fontSize: 50),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      debugPrint("vibrate check is $_isChecked");
+                      incrementCounter();
+                    },
+                    onLongPress: () {
+                      debugPrint("Long pressed");
+                      autoClick();
+                    },
+                    child: Column(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              tTitle,
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.blue[800],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            tText,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '$_count',
+                              style: const TextStyle(
+                                fontSize: 70,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            "Target : $tTarget",
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      drawer: const NavDraw(),
-    );
-  }
-}
-
-class NavDraw extends StatefulWidget {
-  const NavDraw({super.key});
-
-  @override
-  State<NavDraw> createState() => _NavDrawState();
-}
-
-class _NavDrawState extends State<NavDraw> {
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      // Add a ListView to the drawer. This ensures the user can scroll
-      // through the options in the drawer if there isn't enough vertical
-      // space to fit everything.
-      child: ListView(
-        // Important: Remove any padding from the ListView.
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            // decoration: BoxDecoration(
-            //   // color: Colors.blue,
-            // ),
-            child: Text(
-              'الحمد لله ربّ العالمين',
-              style: TextStyle(fontSize: 30),
-              textAlign: TextAlign.right,
-            ),
-          ),
-          // ListTile(
-          //   title: const Text('Tasbihyaat'),
-          //   onTap: () {
-          //     Navigator.pop(context);
-          //     Navigator.push(
-          //       context,
-          //       MaterialPageRoute(builder: (context) => const Tasbeeh()),
-          //     );
-          //   },
-          // ),
-          ListTile(
-            title: const Text('Tasbihyaat'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Tasbeehyaat()),
-              );
-            },
-          ),
-          ListTile(
-            title: const Text('Settings'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingPage()),
-              );
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

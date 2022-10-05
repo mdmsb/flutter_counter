@@ -1,17 +1,23 @@
-class Tasb {
-  String? id;
-  String? tasbeehText;
+import 'package:hive/hive.dart';
 
-  Tasb({
-    required this.id,
-    required this.tasbeehText,
-  });
+part 'listmodel.g.dart';
 
-  static List<Tasb> tasbeeh() {
-    return [
-      Tasb(id: '01', tasbeehText: 'Subhanallah'),
-      Tasb(id: '02', tasbeehText: 'Alhamdulillah'),
-      Tasb(id: '03', tasbeehText: 'Allahuakbar'),
-    ];
-  }
+@HiveType(typeId: 1)
+class TasbeehModel {
+  TasbeehModel(
+      {required this.title,
+      required this.text,
+      required this.target,
+      required this.count});
+  @HiveField(0)
+  String title;
+
+  @HiveField(1)
+  String text;
+
+  @HiveField(2)
+  int target;
+
+  @HiveField(3)
+  int count;
 }

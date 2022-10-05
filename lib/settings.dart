@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tasbeeh/main.dart';
 
 import 'package:wakelock/wakelock.dart';
 
@@ -12,6 +13,27 @@ class SettingPage extends StatefulWidget {
 
 class _SettingPageState extends State<SettingPage> {
   bool toggle = false;
+  static double vibrateduration = 80;
+
+  @override
+  void initState() {
+    super.initState();
+    _getIntFromSharedPref();
+  }
+
+  Future<void> _getIntFromSharedPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      vibrateduration = (prefs.getDouble('vibrateduration') ?? 80);
+    });
+  }
+
+  Future<void> changeSlider(val) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      prefs.setDouble('vibrateduration', val);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,13 +74,15 @@ class _SettingPageState extends State<SettingPage> {
                     style: TextStyle(fontSize: 20),
                   ),
                   Slider(
-                    value: MyHomePageState.vibrateduration,
+                    value: vibrateduration,
                     min: 40,
                     max: 140,
                     divisions: 5,
-                    label: MyHomePageState.vibrateduration.round().toString(),
+                    label: vibrateduration.round().toString(),
                     onChanged: (value) {
                       setState(() {
+                        vibrateduration = value;
+                        changeSlider(value);
                         MyHomePageState.vibrateduration = value;
                       });
                     },
